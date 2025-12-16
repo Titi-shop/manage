@@ -3,6 +3,9 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { List } from "@/app/types";
 
+/**
+ * Lấy username từ session cookie
+ */
 async function getUsername(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
@@ -12,12 +15,13 @@ async function getUsername(): Promise<string | null> {
 
 // =======================
 // GET /api/lists/[id]
+// Lấy 1 list theo id
 // =======================
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params; // ✅ BẮT BUỘC await
+  const { id } = await context.params;
 
   const username = await getUsername();
   if (!username) {
@@ -27,26 +31,29 @@ export async function GET(
   const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
   const list = lists.find((l) => l.id === id);
 
-  return NextResponse.json(list ?? {}, {
-    status: list ? 200 : 404,
-  });
+  if (!list) {
+    return NextResponse.json({}, { status: 404 });
+  }
+
+  return NextResponse.json(list);
 }
 
 // =======================
-// POST /api/lists/[id]
+// PUT /api/lists/[id]
+// Cập nhật nội dung list
 // =======================
-export async function POST(
+export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params; // ✅ BẮT BUỘC await
+  const { id } = await context.params;
 
   const username = await getUsername();
   if (!username) {
     return NextResponse.json({}, { status: 401 });
   }
 
-  const rows = await request.json(); // 👈 lưu toàn bộ bảng
+  const rows = await request.json(); // nội dung bảng
 
   const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
   const index = lists.findIndex((l) => l.id === id);
@@ -63,4 +70,31 @@ export async function POST(
   await kv.set(`lists:${username}`, lists);
 
   return NextResponse.json(lists[index]);
-                                  }
+}
+
+// =======================
+// DELETE /api/lists/[id]
+// Xoá list
+// =======================
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params;
+
+  const username = await getUsername();
+  if (!username) {
+    return NextResponse.json({}, { status: 401 });
+  }
+
+  const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
+  const newLists = lists.filter((l) => l.id !== id);
+
+  if (newLists.length === lists.length) {
+    return NextResponse.json({}, { status: 404 });
+  }
+
+  await kv.set(`lists:${username}`, newLists);
+
+  return NextResponse.json({ success: true });
+}
