@@ -1,81 +1,86 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
+type MediaItem = {
+  id: string;
+  name: string;
+  type: "image" | "video" | "file";
+  mime: string;
+  size: number;
+  path?: string;      // backend dùng
+  createdAt: number;
+};
 
 export default function ImagesPage() {
-  const router = useRouter();
-  const [date, setDate] = useState(() =>
-    new Date().toISOString().slice(0, 10)
-  );
-  const [list, setList] = useState<any[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-
-  const load = async () => {
-    const res = await fetch(`/api/images?date=${date}`, {
-      credentials: "include",
-      cache: "no-store",
-    });
-
-    if (res.status === 401) {
-      router.push("/login");
-      return;
-    }
-
-    setList(await res.json());
-  };
+  const [images, setImages] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    load();
-  }, [date]);
+    const fetchImages = async () => {
+      try {
+        const res = await fetch("/api/media", {
+          credentials: "include",
+          cache: "no-store",
+        });
 
-  const upload = async () => {
-    if (!file) return;
+        if (!res.ok) {
+          throw new Error("Không thể tải dữ liệu");
+        }
 
-    const form = new FormData();
-    form.append("file", file);
-    form.append("date", date);
+        const data: MediaItem[] = await res.json();
 
-    await fetch("/api/images/upload", {
-      method: "POST",
-      credentials: "include",
-      body: form,
-    });
+        // 👉 Chỉ lấy HÌNH ẢNH
+        const imgs = data.filter((m) => m.type === "image");
+        setImages(imgs);
+      } catch (err: any) {
+        setError(err.message || "Có lỗi xảy ra");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setFile(null);
-    load();
-  };
+    fetchImages();
+  }, []);
+
+  if (loading) {
+    return <div className="p-4">Đang tải hình ảnh...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
+  }
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>📷 Ảnh theo ngày</h2>
+    <div className="p-4">
+      <h1 className="text-xl font-semibold mb-4">📷 Hình ảnh</h1>
 
-      <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+      {images.length === 0 ? (
+        <div className="text-gray-500">Chưa có hình ảnh</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {images.map((img) => (
+            <div
+              key={img.id}
+              className="border rounded overflow-hidden bg-gray-50"
+            >
+              {/* 
+                ⚠️ Ảnh PRIVATE
+                → sau này nên load qua /api/media/[id]
+                → hiện tại có thể dùng blob/url nếu bạn đã viết GET
+              */}
+              <img
+                src={`/api/media/${img.id}`}
+                alt={img.name}
+                className="w-full h-40 object-cover"
+              />
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={e => setFile(e.target.files?.[0] || null)}
-      />
-
-      <button onClick={upload}>Upload</button>
-
-      <div
-        style={{
-          marginTop: 12,
-          display: "grid",
-          gridTemplateColumns: "repeat(2,1fr)",
-          gap: 8,
-        }}
-      >
-        {list.map((img) => (
-          <img
-            key={img.id}
-            src={img.url}
-            style={{ width: "100%", borderRadius: 8 }}
-          />
-        ))}
-      </div>
+              <div className="p-2 text-xs truncate">{img.name}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
