@@ -48,10 +48,19 @@ export default function BottomNav() {
         zIndex: 100,
       }}
     >
+      {/* 🏠 HOME */}
+      <Item icon="🏠" label="Home" path="/" />
+
+      {/* 🖼️ ẢNH */}
       <Item icon="🖼️" label="Ảnh" path="/media/images" />
+
+      {/* 🎥 VIDEO */}
       <Item icon="🎥" label="Video" path="/media/videos" />
+
+      {/* 📒 DANH SÁCH SỔ */}
       <Item icon="📒" label="Sổ" path="/lists" />
-      <Item icon="📝" label="Ghi chú" path="/notes" />
+
+      {/* 📎 TỆP */}
       <Item icon="📎" label="Tệp" path="/files" />
     </div>
   );
