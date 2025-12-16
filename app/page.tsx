@@ -96,60 +96,13 @@ export default function HomePage() {
 
   if (loading) return <p style={{ padding: 24 }}>Đang tải…</p>;
 
-  if (!loggedIn) {
-    return (
-      <div style={{ padding: 24 }}>
-        <h2>🔐 hello</h2>
-        <button onClick={() => router.push("/login")}>Đăng nhập</button>
-        <button onClick={() => router.push("/register")} style={{ marginLeft: 8 }}>
-          Đăng ký
-        </button>
-      </div>
-    );
-  }
+  
 
   /* =======================
      UI
   ======================= */
   return (
     <div style={{ padding: 16, maxWidth: 420, margin: "0 auto" }}>
-      {/* ===== HEADER ===== */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-          paddingBottom: 8,
-          borderBottom: "1px solid #ddd",
-        }}
-      >
-        <div style={{ fontSize: 14 }}>
-          👤{" "}
-          <b>{showUser ? username : "••••••"}</b>
-          <button
-            onClick={() => setShowUser(!showUser)}
-            style={{ marginLeft: 6, fontSize: 12 }}
-          >
-            {showUser ? "Ẩn" : "Hiện"}
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: 6 }}>
-          <button
-            style={{ fontSize: 12 }}
-            onClick={() => router.push("/change-password")}
-          >
-            🔐 Đổi MK
-          </button>
-          <button
-            style={{ fontSize: 12, color: "red" }}
-            onClick={logout}
-          >
-            🚪 Thoát
-          </button>
-        </div>
-      </div>
 
       {/* ===== TITLE ===== */}
       <h2 style={{ marginBottom: 8 }}>📒 Danh sách sổ</h2>
