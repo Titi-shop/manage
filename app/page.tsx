@@ -96,13 +96,24 @@ export default function HomePage() {
 
   if (loading) return <p style={{ padding: 24 }}>Đang tải…</p>;
 
-  
+  if (!loggedIn) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h2>🔐 hello</h2>
+        <button onClick={() => router.push("/login")}>Đăng nhập</button>
+        <button onClick={() => router.push("/register")} style={{ marginLeft: 8 }}>
+          Đăng ký
+        </button>
+      </div>
+    );
+  }
 
   /* =======================
      UI
   ======================= */
   return (
     <div style={{ padding: 16, maxWidth: 420, margin: "0 auto" }}>
+      
 
       {/* ===== TITLE ===== */}
       <h2 style={{ marginBottom: 8 }}>📒 Danh sách sổ</h2>
