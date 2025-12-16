@@ -99,7 +99,7 @@ export default function HomePage() {
   if (!loggedIn) {
     return (
       <div style={{ padding: 24 }}>
-        <h2>🔐 hello</h2>
+      
         <button onClick={() => router.push("/login")}>Đăng nhập</button>
         <button onClick={() => router.push("/register")} style={{ marginLeft: 8 }}>
           Đăng ký
