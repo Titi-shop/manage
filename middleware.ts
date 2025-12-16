@@ -1,22 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const pathname = req.nextUrl.pathname;
+  const { pathname } = req.nextUrl;
   const session = req.cookies.get("session")?.value;
 
-  // cho phép trang public
+  // ===== PUBLIC ROUTES =====
   if (
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/api")
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico"
   ) {
     return NextResponse.next();
   }
 
-  // chưa login → về /login
+  // ===== CHƯA LOGIN → ÉP LOGIN =====
   if (!session) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
 }
+
+/**
+ * ✅ QUAN TRỌNG:
+ * chỉ áp middleware cho route cần bảo vệ
+ */
+export const config = {
+  matcher: [
+    "/", 
+    "/list/:path*",
+    "/change-password",
+  ],
+};
