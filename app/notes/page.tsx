@@ -24,8 +24,10 @@ export default function NotesPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+
       const res = await fetch(`/api/notes?date=${date}`, {
         cache: "no-store",
+        credentials: "include", // 🔥
       });
 
       if (res.status === 401) {
@@ -50,6 +52,7 @@ export default function NotesPage() {
     await fetch("/api/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include", // 🔥
       body: JSON.stringify({ date, notes: newNotes }),
     });
   };
@@ -92,7 +95,6 @@ export default function NotesPage() {
     <div style={{ padding: 16, maxWidth: 500, margin: "0 auto" }}>
       <h2>📝 Ghi chú theo ngày</h2>
 
-      {/* DATE PICK */}
       <input
         type="date"
         value={date}
@@ -100,7 +102,6 @@ export default function NotesPage() {
         style={{ marginBottom: 12 }}
       />
 
-      {/* ADD */}
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         <input
           placeholder="Nhập ghi chú…"
@@ -111,7 +112,6 @@ export default function NotesPage() {
         <button onClick={addNote}>➕</button>
       </div>
 
-      {/* LIST */}
       {notes.length === 0 && (
         <p style={{ opacity: 0.5 }}>Chưa có ghi chú</p>
       )}
