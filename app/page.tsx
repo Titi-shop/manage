@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Note {
   id: number;
@@ -9,41 +10,43 @@ interface Note {
 }
 
 export default function CalendarNotePage() {
-  const [now, setNow] = useState(new Date());
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [input, setInput] = useState("");
+  const router = useRouter();
 
   /* =======================
-     TIME – REAL CLOCK
+     TIME (REAL CLOCK)
   ======================= */
+  const [now, setNow] = useState(new Date());
+
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
     }, 60 * 1000);
-
     return () => clearInterval(timer);
   }, []);
 
   /* =======================
-     LOAD NOTES BY DATE
+     VIEW DATE (ANY DAY)
   ======================= */
-  const dateKey = now.toISOString().slice(0, 10); // YYYY-MM-DD
+  const [viewDate, setViewDate] = useState<Date>(new Date());
+
+  // key lưu ghi chú theo ngày đang xem
+  const dateKey = viewDate.toISOString().slice(0, 10);
+
+  /* =======================
+     NOTES
+  ======================= */
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [input, setInput] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem(`notes-${dateKey}`);
     setNotes(saved ? JSON.parse(saved) : []);
   }, [dateKey]);
 
-  /* =======================
-     SAVE NOTES
-  ======================= */
   useEffect(() => {
     localStorage.setItem(`notes-${dateKey}`, JSON.stringify(notes));
   }, [notes, dateKey]);
 
-  /* =======================
-     ADD NOTE
-  ======================= */
   const addNote = () => {
     if (!input.trim()) return;
 
@@ -60,9 +63,6 @@ export default function CalendarNotePage() {
     setInput("");
   };
 
-  /* =======================
-     DELETE NOTE
-  ======================= */
   const deleteNote = (id: number) => {
     setNotes(notes.filter((n) => n.id !== id));
   };
@@ -80,14 +80,28 @@ export default function CalendarNotePage() {
     "THỨ BẢY",
   ];
 
-  const day = now.getDate();
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
-  const weekday = weekdays[now.getDay()];
-  const time = now.toLocaleTimeString("vi-VN", {
+  const day = viewDate.getDate();
+  const month = viewDate.getMonth() + 1;
+  const year = viewDate.getFullYear();
+  const weekday = weekdays[viewDate.getDay()];
+
+  const timeNow = now.toLocaleTimeString("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  /* =======================
+     CHANGE DAY
+  ======================= */
+  const changeDay = (delta: number) => {
+    const d = new Date(viewDate);
+    d.setDate(d.getDate() + delta);
+    setViewDate(d);
+  };
+
+  const onPickDate = (value: string) => {
+    setViewDate(new Date(value));
+  };
 
   /* =======================
      UI
@@ -101,8 +115,31 @@ export default function CalendarNotePage() {
           "linear-gradient(180deg, #f6f8fc 0%, #eef2e6 100%)",
       }}
     >
+      {/* TOP ACTIONS */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 12,
+        }}
+      >
+        <button
+          onClick={() => router.push("/login")}
+          style={{ fontSize: 13 }}
+        >
+          🔐 Đăng nhập
+        </button>
+
+        <button
+          onClick={() => router.push("/register")}
+          style={{ fontSize: 13 }}
+        >
+          ✍️ Đăng ký
+        </button>
+      </div>
+
       {/* HEADER DATE */}
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
         <div
           style={{
             display: "inline-block",
@@ -110,7 +147,7 @@ export default function CalendarNotePage() {
             borderRadius: 20,
             background: "#fff",
             fontSize: 14,
-            marginBottom: 10,
+            marginBottom: 8,
           }}
         >
           Tháng {month} – {year}
@@ -127,25 +164,37 @@ export default function CalendarNotePage() {
           {day}
         </div>
 
-        <div style={{ fontSize: 20, marginBottom: 6 }}>
-          {weekday}
-        </div>
+        <div style={{ fontSize: 20 }}>{weekday}</div>
 
-        <div style={{ fontSize: 14, opacity: 0.7 }}>
-          ⏰ {time}
+        <div style={{ fontSize: 13, opacity: 0.7 }}>
+          ⏰ Giờ hiện tại: {timeNow}
         </div>
       </div>
 
-      {/* ADD NOTE */}
+      {/* DATE NAV */}
       <div
         style={{
           display: "flex",
+          justifyContent: "center",
           gap: 8,
-          marginBottom: 12,
+          marginBottom: 16,
         }}
       >
+        <button onClick={() => changeDay(-1)}>⬅️</button>
+
         <input
-          placeholder="Ghi chú cho hôm nay…"
+          type="date"
+          value={dateKey}
+          onChange={(e) => onPickDate(e.target.value)}
+        />
+
+        <button onClick={() => changeDay(1)}>➡️</button>
+      </div>
+
+      {/* ADD NOTE */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <input
+          placeholder="Ghi chú cho ngày này…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           style={{
@@ -169,11 +218,11 @@ export default function CalendarNotePage() {
         </button>
       </div>
 
-      {/* NOTES LIST */}
+      {/* NOTES */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {notes.length === 0 && (
           <div style={{ opacity: 0.5, textAlign: "center" }}>
-            Chưa có ghi chú cho hôm nay
+            Không có ghi chú cho ngày này
           </div>
         )}
 
@@ -186,7 +235,6 @@ export default function CalendarNotePage() {
               borderRadius: 12,
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
             }}
           >
             <div>
@@ -202,7 +250,6 @@ export default function CalendarNotePage() {
                 border: "none",
                 background: "transparent",
                 color: "red",
-                fontSize: 16,
               }}
             >
               ✕
