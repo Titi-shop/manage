@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "./components/Navbar"; // ✅ thêm dòng này
+import Navbar from "./components/Navbar"; 
+import BottomNav from "./components/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,7 @@ export default function RootLayout({
       >
         {/* ✅ Thanh điều hướng chung */}
         <Navbar />
-
+       <BottomNav />
         {/* ✅ Nội dung từng page */}
         {children}
       </body>
