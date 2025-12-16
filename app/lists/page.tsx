@@ -11,16 +11,34 @@ export default function ListsPage() {
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  /* =======================
+     LOAD LISTS
+  ======================= */
   useEffect(() => {
-    fetch("/api/lists")
-      .then(res => res.json())
-      .then(setLists)
-      .finally(() => setLoading(false));
+    const load = async () => {
+      try {
+        const res = await fetch("/api/lists");
+        const data: List[] = await res.json();
+        setLists(data);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
   }, []);
 
+  /* =======================
+     CREATE LIST
+  ======================= */
   const createList = async () => {
-    if (!name.trim()) return;
+    setError("");
+    if (!name.trim()) {
+      setError("Vui lòng nhập tên sổ");
+      return;
+    }
 
     const res = await fetch("/api/lists", {
       method: "POST",
@@ -33,15 +51,44 @@ export default function ListsPage() {
     setName("");
   };
 
+  /* =======================
+     DELETE LISTS
+  ======================= */
+  const deleteLists = async () => {
+    if (selected.length === 0) return;
+
+    const password = prompt("Nhập mật khẩu để xoá sổ:");
+    if (!password) return;
+
+    const res = await fetch("/api/lists/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: selected, password }),
+    });
+
+    if (!res.ok) {
+      alert("❌ Sai mật khẩu");
+      return;
+    }
+
+    setLists(lists.filter((l) => !selected.includes(l.id)));
+    setSelected([]);
+  };
+
   if (loading) return <p style={{ padding: 24 }}>Đang tải…</p>;
 
+  /* =======================
+     UI (LẤY TỪ FILE 1)
+  ======================= */
   return (
-    <div style={{ padding: 16, paddingBottom: 70 }}>
-      <h2>📒 Danh sách sổ</h2>
+    <div style={{ padding: 16, maxWidth: 420, margin: "0 auto", paddingBottom: 70 }}>
+      {/* ===== TITLE ===== */}
+      <h2 style={{ marginBottom: 8 }}>📒 Danh sách sổ</h2>
 
+      {/* ===== CREATE ===== */}
       <div style={{ display: "flex", gap: 6 }}>
         <input
-          placeholder="Tên sổ"
+          placeholder="Tên sổ (tên danh sách...)"
           value={name}
           onChange={(e) => setName(e.target.value)}
           style={{ flex: 1 }}
@@ -49,17 +96,62 @@ export default function ListsPage() {
         <button onClick={createList}>➕</button>
       </div>
 
-      <ul style={{ marginTop: 16, listStyle: "none", padding: 0 }}>
-        {lists.map(l => (
+      {error && <p style={{ color: "red", fontSize: 13 }}>{error}</p>}
+
+      {/* ===== LISTS ===== */}
+      <ul style={{ marginTop: 16, paddingLeft: 0, listStyle: "none" }}>
+        {lists.map((l) => (
           <li
             key={l.id}
-            style={{ padding: 8, borderBottom: "1px dashed #ddd" }}
-            onClick={() => router.push(`/list/${l.id}`)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "6px 0",
+              borderBottom: "1px dashed #eee",
+            }}
           >
-            📁 {l.name}
+            <input
+              type="checkbox"
+              checked={selected.includes(l.id)}
+              onChange={(e) =>
+                setSelected(
+                  e.target.checked
+                    ? [...selected, l.id]
+                    : selected.filter((x) => x !== l.id)
+                )
+              }
+            />
+            <button
+              onClick={() => router.push(`/list/${l.id}`)}
+              style={{
+                marginLeft: 8,
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              📁 {l.name}
+            </button>
           </li>
         ))}
       </ul>
+
+      {/* ===== DELETE ===== */}
+      {selected.length > 0 && (
+        <button
+          onClick={deleteLists}
+          style={{
+            marginTop: 12,
+            width: "100%",
+            color: "white",
+            background: "red",
+            padding: 8,
+          }}
+        >
+          🗑️ Xoá sổ đã chọn
+        </button>
+      )}
     </div>
   );
 }
