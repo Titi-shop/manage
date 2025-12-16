@@ -50,7 +50,7 @@ export default function BottomNav() {
     >
       <Item icon="🖼️" label="Ảnh" path="/media/images" />
       <Item icon="🎥" label="Video" path="/media/videos" />
-      <Item icon="📒" label="Sổ" path="/" />
+      <Item icon="📒" label="Sổ" path="/lists" />
       <Item icon="📝" label="Ghi chú" path="/notes" />
       <Item icon="📎" label="Tệp" path="/files" />
     </div>
