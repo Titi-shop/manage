@@ -111,10 +111,10 @@ export default function ListDetailPage() {
     const remain = row.total - paidBefore;
 
     if (field === "amount") {
-      let num = Number(value);
-      if (num > remain) num = remain;
-      payments[payIndex] = { ...payments[payIndex], amount: num };
-    } else {
+  let num = Number(value);
+  if (num < 0) num = 0; // chỉ chặn âm
+  payments[payIndex] = { ...payments[payIndex], amount: num };
+} else {
       payments[payIndex] = { ...payments[payIndex], date: value as string };
     }
 
