@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Navbar from "../components/Navbar";
+import Navbar from "../../components/Navbar";
 
-export default function MainLayout({
+export default async function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies(); // ✅ PHẢI await
   const session = cookieStore.get("session")?.value;
 
   // ❌ chưa login → ép về /login
