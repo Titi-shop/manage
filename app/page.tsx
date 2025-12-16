@@ -1,184 +1,115 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { List } from "@/app/types";
 
-export default function HomePage() {
-  const router = useRouter();
+export default function CalendarPage() {
+  const [now, setNow] = useState(new Date());
 
-  const [lists, setLists] = useState<List[]>([]);
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [showUser, setShowUser] = useState(true);
-
-  const [selected, setSelected] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [error, setError] = useState("");
-
-  /* =======================
-     LOAD USER + LISTS
-  ======================= */
+  // cập nhật giờ mỗi phút
   useEffect(() => {
-    const load = async () => {
-      try {
-        const me = await fetch("/api/auth/me");
-        if (!me.ok) {
-          setLoggedIn(false);
-          return;
-        }
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60 * 1000);
 
-        const u = await me.json();
-        setUsername(u.username);
-
-        const res = await fetch("/api/lists");
-        const data: List[] = await res.json();
-        setLists(data);
-        setLoggedIn(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    return () => clearInterval(timer);
   }, []);
 
-  /* =======================
-     CREATE LIST
-  ======================= */
-  const createList = async () => {
-    setError("");
-    if (!name.trim()) {
-      setError("Vui lòng nhập tên sổ");
-      return;
-    }
+  const day = now.getDate();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, "0");
 
-    const res = await fetch("/api/lists", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
+  const weekdays = [
+    "CHỦ NHẬT",
+    "THỨ HAI",
+    "THỨ BA",
+    "THỨ TƯ",
+    "THỨ NĂM",
+    "THỨ SÁU",
+    "THỨ BẢY",
+  ];
 
-    const newList: List = await res.json();
-    setLists([newList, ...lists]);
-    setName("");
-  };
+  const weekday = weekdays[now.getDay()];
 
-  /* =======================
-     DELETE LISTS
-  ======================= */
-  const deleteLists = async () => {
-    if (selected.length === 0) return;
-
-    const password = prompt("Nhập mật khẩu để xoá sổ:");
-    if (!password) return;
-
-    const res = await fetch("/api/lists/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selected, password }),
-    });
-
-    if (!res.ok) {
-      alert("❌ Sai mật khẩu");
-      return;
-    }
-
-    setLists(lists.filter(l => !selected.includes(l.id)));
-    setSelected([]);
-  };
-
-  const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
-  };
-
-  if (loading) return <p style={{ padding: 24 }}>Đang tải…</p>;
-
-  if (!loggedIn) {
-    return (
-      <div style={{ padding: 24 }}>
-      
-        <button onClick={() => router.push("/login")}>Đăng nhập</button>
-        <button onClick={() => router.push("/register")} style={{ marginLeft: 8 }}>
-          Đăng ký
-        </button>
-      </div>
-    );
-  }
-
-  /* =======================
-     UI
-  ======================= */
   return (
-    <div style={{ padding: 16, maxWidth: 420, margin: "0 auto" }}>
-      
-
-      {/* ===== TITLE ===== */}
-      <h2 style={{ marginBottom: 8 }}>📒 Danh sách sổ</h2>
-
-      {/* ===== CREATE ===== */}
-      <div style={{ display: "flex", gap: 6 }}>
-        <input
-          placeholder="Tên sổ (tên danh sách...)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          style={{ flex: 1 }}
-        />
-        <button onClick={createList}>➕</button>
+    <div
+      style={{
+        minHeight: "100vh",
+        padding: 20,
+        textAlign: "center",
+        background:
+          "linear-gradient(to bottom, #f6f2e8, #e9efd9)",
+      }}
+    >
+      {/* Tháng / Năm */}
+      <div
+        style={{
+          display: "inline-block",
+          padding: "6px 16px",
+          borderRadius: 20,
+          background: "#fff",
+          fontSize: 14,
+          marginBottom: 12,
+        }}
+      >
+        Tháng {month} – {year}
       </div>
 
-      {error && <p style={{ color: "red", fontSize: 13 }}>{error}</p>}
+      {/* Ngày lớn */}
+      <div
+        style={{
+          fontSize: 120,
+          fontWeight: "bold",
+          color: "#1f3c88",
+          lineHeight: 1,
+        }}
+      >
+        {day}
+      </div>
 
-      {/* ===== LISTS ===== */}
-      <ul style={{ marginTop: 16, paddingLeft: 0, listStyle: "none" }}>
-        {lists.map((l) => (
-          <li
-            key={l.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "6px 0",
-              borderBottom: "1px dashed #eee",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={selected.includes(l.id)}
-              onChange={(e) =>
-                setSelected(
-                  e.target.checked
-                    ? [...selected, l.id]
-                    : selected.filter((x) => x !== l.id)
-                )
-              }
-            />
-            <a
-              href={`/list/${l.id}`}
-              style={{ marginLeft: 8, textDecoration: "none" }}
-            >
-              📁 {l.name}
-            </a>
-          </li>
-        ))}
-      </ul>
+      {/* Thứ */}
+      <div
+        style={{
+          fontSize: 22,
+          letterSpacing: 1,
+          marginBottom: 24,
+        }}
+      >
+        {weekday}
+      </div>
 
-      {/* ===== DELETE ===== */}
-      {selected.length > 0 && (
-        <button
-          onClick={deleteLists}
-          style={{
-            marginTop: 12,
-            width: "100%",
-            color: "white",
-            background: "red",
-            padding: 8,
-          }}
-        >
-          🗑️ Xoá sổ đã chọn
-        </button>
-      )}
+      {/* Thông tin dưới */}
+      <div
+        style={{
+          marginTop: 40,
+          display: "flex",
+          justifyContent: "space-around",
+          fontSize: 16,
+        }}
+      >
+        <div>
+          <div style={{ opacity: 0.6 }}>GIỜ</div>
+          <strong>
+            {hours}:{minutes}
+          </strong>
+        </div>
+
+        <div>
+          <div style={{ opacity: 0.6 }}>NGÀY</div>
+          <strong>{day}</strong>
+        </div>
+
+        <div>
+          <div style={{ opacity: 0.6 }}>THÁNG</div>
+          <strong>{month}</strong>
+        </div>
+
+        <div>
+          <div style={{ opacity: 0.6 }}>NĂM</div>
+          <strong>{year}</strong>
+        </div>
+      </div>
     </div>
   );
 }
