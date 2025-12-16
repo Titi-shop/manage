@@ -1,53 +1,88 @@
-import { cookies } from "next/headers";
 import { kv } from "@vercel/kv";
-import { put } from "@vercel/blob";
-import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import path from "path";
+import fs from "fs/promises";
 import crypto from "crypto";
 
-export async function POST(req: Request) {
-  // 🔐 AUTH
+/**
+ * Lấy username từ session
+ */
+async function getUsername(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!token) return null;
+  return await kv.get<string>(`session:${token}`);
+}
 
-  const username = await kv.get<string>(`session:${token}`);
-  if (!username) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+/**
+ * Thư mục lưu file PRIVATE (KHÔNG public)
+ * ⚠️ Đảm bảo thư mục này KHÔNG nằm trong /public
+ */
+const STORAGE_DIR = path.join(process.cwd(), "storage", "media");
 
-  // 📥 FORM
-  const form = await req.formData();
-  const file = form.get("file") as File | null;
-  const type = form.get("type") as "image" | "video" | null;
-  const date = form.get("date") as string | null;
-
-  if (!file || !type || !date) {
-    return NextResponse.json({ error: "Missing data" }, { status: 400 });
+export async function POST(request: NextRequest) {
+  // 🔐 Kiểm tra đăng nhập
+  const username = await getUsername();
+  if (!username) {
+    return NextResponse.json({}, { status: 401 });
   }
 
-  // ⛔ Giới hạn dung lượng
-  const maxSize = type === "video" ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
-  if (file.size > maxSize) {
-    return NextResponse.json({ error: "File quá lớn" }, { status: 400 });
+  const formData = await request.formData();
+  const file = formData.get("file") as File | null;
+
+  if (!file) {
+    return NextResponse.json(
+      { error: "No file provided" },
+      { status: 400 }
+    );
   }
 
-  // ☁️ Upload Blob
-  const blob = await put(
-    `${username}/${type}/${Date.now()}-${file.name}`,
-    file,
-    { access: "public" }
-  );
+  // 📌 Giới hạn dung lượng (tuỳ chỉnh)
+  const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json(
+      { error: "File too large" },
+      { status: 413 }
+    );
+  }
 
-  // 🧠 Lưu metadata KV
-  const key = `media:${username}:${type}:${date}`;
-  const list = ((await kv.get(key)) as any[]) ?? [];
+  // 📎 Phân loại file
+  let type: "image" | "video" | "file" = "file";
 
-  const item = {
-    id: crypto.randomUUID(),
-    url: blob.url,
+  if (file.type.startsWith("image/")) type = "image";
+  else if (file.type.startsWith("video/")) type = "video";
+
+  // 🔐 Tạo tên file an toàn
+  const ext = path.extname(file.name);
+  const id = crypto.randomUUID();
+  const filename = `${id}${ext}`;
+
+  // 📁 Tách thư mục theo user
+  const userDir = path.join(STORAGE_DIR, username);
+  await fs.mkdir(userDir, { recursive: true });
+
+  const filePath = path.join(userDir, filename);
+
+  // 💾 Ghi file
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.writeFile(filePath, buffer);
+
+  // 📦 Metadata lưu KV
+  const mediaItem = {
+    id,
     name: file.name,
+    type,
+    mime: file.type,
+    size: file.size,
+    path: filePath, // private path
     createdAt: Date.now(),
   };
 
-  await kv.set(key, [item, ...list]);
+  const key = `media:${username}`;
+  const list = (await kv.get<any[]>(key)) ?? [];
+  list.unshift(mediaItem);
+  await kv.set(key, list);
 
-  return NextResponse.json(item);
+  return NextResponse.json(mediaItem);
 }
