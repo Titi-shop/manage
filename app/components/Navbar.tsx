@@ -7,7 +7,7 @@ export default function Navbar() {
   const router = useRouter();
 
   const [username, setUsername] = useState<string>("");
-  const [showUser, setShowUser] = useState(true);
+  const [showUser, setShowUser] = useState(false); // ✅ MẶC ĐỊNH ẨN
   const [loading, setLoading] = useState(true);
 
   /* =======================
@@ -77,7 +77,7 @@ export default function Navbar() {
           style={{ fontSize: 12, color: "red" }}
           onClick={logout}
         >
-           Thoát
+          Thoát
         </button>
       </div>
     </div>
