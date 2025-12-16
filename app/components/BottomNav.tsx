@@ -52,10 +52,10 @@ export default function BottomNav() {
       <Item icon="🏠" label="Home" path="/" />
 
       {/* 🖼️ ẢNH */}
-      <Item icon="🖼️" label="Ảnh" path="/media/images" />
+      <Item icon="🖼️" label="Ảnh" path="/images" />
 
       {/* 🎥 VIDEO */}
-      <Item icon="🎥" label="Video" path="/media/videos" />
+      <Item icon="🎥" label="Video" path="/videos" />
 
       {/* 📒 DANH SÁCH SỔ */}
       <Item icon="📒" label="Sổ" path="/lists" />
