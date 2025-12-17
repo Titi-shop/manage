@@ -14,7 +14,7 @@ export default function HomeCalendarPage() {
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
-    }, 60 * 1000); // cập nhật mỗi phút
+    }, 60 * 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -70,8 +70,24 @@ export default function HomeCalendarPage() {
         padding: 16,
         background:
           "linear-gradient(180deg, #f6f8fc 0%, #eef2e6 100%)",
+        position: "relative",
       }}
     >
+      {/* 🔐 LOGIN HOTSPOT (ẨN) */}
+      <div
+        onClick={() => router.push("/login")}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 40,
+          height: 40,
+          cursor: "pointer",
+          background: "transparent",
+          zIndex: 9999,
+        }}
+      />
+
       {/* ===== HEADER DATE ===== */}
       <div style={{ textAlign: "center", marginBottom: 16 }}>
         <div
