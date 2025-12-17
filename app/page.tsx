@@ -7,14 +7,14 @@ export default function HomeCalendarPage() {
   const router = useRouter();
 
   /* =======================
-     TIME (REAL CLOCK)
+     REAL TIME CLOCK
   ======================= */
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
-    }, 60 * 1000);
+    }, 60 * 1000); // cập nhật mỗi phút
     return () => clearInterval(timer);
   }, []);
 
@@ -72,7 +72,7 @@ export default function HomeCalendarPage() {
           "linear-gradient(180deg, #f6f8fc 0%, #eef2e6 100%)",
       }}
     >
-      {/* HEADER DATE */}
+      {/* ===== HEADER DATE ===== */}
       <div style={{ textAlign: "center", marginBottom: 16 }}>
         <div
           style={{
@@ -105,7 +105,7 @@ export default function HomeCalendarPage() {
         </div>
       </div>
 
-      {/* DATE NAV */}
+      {/* ===== DATE NAV ===== */}
       <div
         style={{
           display: "flex",
@@ -125,7 +125,7 @@ export default function HomeCalendarPage() {
         <button onClick={() => changeDay(1)}>➡️</button>
       </div>
 
-      {/* GO TO NOTES */}
+      {/* ===== GO TO NOTES ===== */}
       <div style={{ textAlign: "center" }}>
         <button
           onClick={() => router.push("/notes")}
