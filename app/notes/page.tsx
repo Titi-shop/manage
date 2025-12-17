@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface Note {
   id: number;
@@ -10,51 +9,72 @@ interface Note {
 }
 
 export default function NotesPage() {
-  const router = useRouter();
+  /* =======================
+     DATE
+  ======================= */
   const [date, setDate] = useState(() =>
     new Date().toISOString().slice(0, 10)
   );
+
+  /* =======================
+     STATE
+  ======================= */
   const [notes, setNotes] = useState<Note[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
 
   /* =======================
-     LOAD NOTES
+     LOAD NOTES (API)
   ======================= */
   useEffect(() => {
     const load = async () => {
       setLoading(true);
 
-      const res = await fetch(`/api/notes?date=${date}`, {
-        cache: "no-store",
-        credentials: "include", // 🔥
-      });
+      try {
+        const res = await fetch(`/api/notes?date=${date}`, {
+          cache: "no-store",
+          credentials: "include",
+        });
 
-      if (res.status === 401) {
-        router.push("/login");
-        return;
+        // 🔕 Chưa đăng nhập → coi như chưa có dữ liệu
+        if (res.status === 401) {
+          setNotes([]);
+          return;
+        }
+
+        if (!res.ok) {
+          setNotes([]);
+          return;
+        }
+
+        const data = await res.json();
+        setNotes(Array.isArray(data) ? data : []);
+      } catch {
+        setNotes([]);
+      } finally {
+        setLoading(false);
       }
-
-      const data = await res.json();
-      setNotes(data);
-      setLoading(false);
     };
 
     load();
-  }, [date, router]);
+  }, [date]);
 
   /* =======================
-     SAVE NOTES
+     SAVE NOTES (API)
   ======================= */
   const saveNotes = async (newNotes: Note[]) => {
     setNotes(newNotes);
 
-    await fetch("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // 🔥
-      body: JSON.stringify({ date, notes: newNotes }),
-    });
+    try {
+      await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ date, notes: newNotes }),
+      });
+    } catch {
+      // im lặng – API là nơi quyết định
+    }
   };
 
   /* =======================
@@ -73,20 +93,20 @@ export default function NotesPage() {
       }),
     };
 
-    const updated = [newNote, ...notes];
     setInput("");
-    await saveNotes(updated);
+    await saveNotes([newNote, ...notes]);
   };
 
   /* =======================
      DELETE NOTE
   ======================= */
   const deleteNote = async (id: number) => {
-    const updated = notes.filter((n) => n.id !== id);
-    await saveNotes(updated);
+    await saveNotes(notes.filter((n) => n.id !== id));
   };
 
-  if (loading) return <p style={{ padding: 24 }}>Đang tải ghi chú…</p>;
+  if (loading) {
+    return <p style={{ padding: 24 }}>Đang tải ghi chú…</p>;
+  }
 
   /* =======================
      UI
