@@ -19,7 +19,10 @@ export default function ListsPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/lists");
+        const res = await fetch("/api/lists", {
+  credentials: "include",
+  cache: "no-store",
+});
         const data: List[] = await res.json();
         setLists(data);
       } finally {
@@ -55,28 +58,21 @@ export default function ListsPage() {
      DELETE LISTS
   ======================= */
   const deleteLists = async () => {
-    if (selected.length === 0) return;
+  if (selected.length === 0) return;
 
-    const password = prompt("Nhập mật khẩu để xoá sổ:");
-    if (!password) return;
+  const ok = confirm("Bạn chắc chắn muốn xoá các sổ đã chọn?");
+  if (!ok) return;
 
-    const res = await fetch("/api/lists/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: selected, password }),
+  for (const id of selected) {
+    await fetch(`/api/lists/${id}`, {
+      method: "DELETE",
+      credentials: "include",
     });
+  }
 
-    if (!res.ok) {
-      alert("❌ Sai mật khẩu");
-      return;
-    }
-
-    setLists(lists.filter((l) => !selected.includes(l.id)));
-    setSelected([]);
-  };
-
-  if (loading) return <p style={{ padding: 24 }}>Đang tải…</p>;
-
+  setLists(lists.filter((l) => !selected.includes(l.id)));
+  setSelected([]);
+};
   /* =======================
      UI (LẤY TỪ FILE 1)
   ======================= */
