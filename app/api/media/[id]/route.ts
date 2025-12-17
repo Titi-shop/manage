@@ -14,9 +14,9 @@ async function getUsername(): Promise<string | null> {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> } // ✅ THEO ĐÚNG TYPE BUILD
 ) {
-  const { id } = params;
+  const { id } = await context.params; // ✅ BẮT BUỘC await
 
   const username = await getUsername();
   if (!username) {
@@ -31,6 +31,6 @@ export async function GET(
     return NextResponse.json({}, { status: 404 });
   }
 
-  // ✅ REDIRECT TỚI BLOB (CÁCH CHUẨN DUY NHẤT)
+  // ✅ Redirect tới Blob URL (CHUẨN VERCEL)
   return NextResponse.redirect(item.blobUrl);
 }
