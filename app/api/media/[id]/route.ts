@@ -1,7 +1,6 @@
 import { kv } from "@vercel/kv";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { get } from "@vercel/blob";
 
 /**
  * Lấy username từ session
@@ -15,9 +14,9 @@ async function getUsername(): Promise<string | null> {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } } // ✅ ĐÚNG
+  { params }: { params: { id: string } }
 ) {
-  const { id } = params; // ✅ KHÔNG await
+  const { id } = params;
 
   const username = await getUsername();
   if (!username) {
@@ -32,15 +31,6 @@ export async function GET(
     return NextResponse.json({}, { status: 404 });
   }
 
-  // 🔥 LẤY FILE TỪ VERCEL BLOB
-  const blob = await get(item.blobUrl);
-
-  return new NextResponse(blob.body, {
-    headers: {
-      "Content-Type": item.mime,
-      "Content-Disposition": `inline; filename="${encodeURIComponent(
-        item.name
-      )}"`,
-    },
-  });
+  // ✅ REDIRECT TỚI BLOB (CÁCH CHUẨN DUY NHẤT)
+  return NextResponse.redirect(item.blobUrl);
 }
