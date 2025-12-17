@@ -3,13 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-interface Note {
-  id: number;
-  text: string;
-  time: string;
-}
-
-export default function CalendarNotePage() {
+export default function HomeCalendarPage() {
   const router = useRouter();
 
   /* =======================
@@ -25,47 +19,10 @@ export default function CalendarNotePage() {
   }, []);
 
   /* =======================
-     VIEW DATE (ANY DAY)
+     VIEW DATE
   ======================= */
   const [viewDate, setViewDate] = useState<Date>(new Date());
-
-  // key lưu ghi chú theo ngày đang xem
   const dateKey = viewDate.toISOString().slice(0, 10);
-
-  /* =======================
-     NOTES
-  ======================= */
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [input, setInput] = useState("");
-
-  useEffect(() => {
-    const saved = localStorage.getItem(`notes-${dateKey}`);
-    setNotes(saved ? JSON.parse(saved) : []);
-  }, [dateKey]);
-
-  useEffect(() => {
-    localStorage.setItem(`notes-${dateKey}`, JSON.stringify(notes));
-  }, [notes, dateKey]);
-
-  const addNote = () => {
-    if (!input.trim()) return;
-
-    const newNote: Note = {
-      id: Date.now(),
-      text: input,
-      time: now.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    setNotes([newNote, ...notes]);
-    setInput("");
-  };
-
-  const deleteNote = (id: number) => {
-    setNotes(notes.filter((n) => n.id !== id));
-  };
 
   /* =======================
      DATE FORMAT
@@ -115,29 +72,6 @@ export default function CalendarNotePage() {
           "linear-gradient(180deg, #f6f8fc 0%, #eef2e6 100%)",
       }}
     >
-      {/* TOP ACTIONS */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 12,
-        }}
-      >
-        <button
-          onClick={() => router.push("/login")}
-          style={{ fontSize: 13 }}
-        >
-          🔐 Đăng nhập
-        </button>
-
-        <button
-          onClick={() => router.push("/register")}
-          style={{ fontSize: 13 }}
-        >
-          ✍️ Đăng ký
-        </button>
-      </div>
-
       {/* HEADER DATE */}
       <div style={{ textAlign: "center", marginBottom: 16 }}>
         <div
@@ -177,7 +111,7 @@ export default function CalendarNotePage() {
           display: "flex",
           justifyContent: "center",
           gap: 8,
-          marginBottom: 16,
+          marginBottom: 20,
         }}
       >
         <button onClick={() => changeDay(-1)}>⬅️</button>
@@ -191,71 +125,21 @@ export default function CalendarNotePage() {
         <button onClick={() => changeDay(1)}>➡️</button>
       </div>
 
-      {/* ADD NOTE */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <input
-          placeholder="Ghi chú cho ngày này…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          style={{
-            flex: 1,
-            padding: 10,
-            borderRadius: 10,
-            border: "1px solid #ccc",
-          }}
-        />
+      {/* GO TO NOTES */}
+      <div style={{ textAlign: "center" }}>
         <button
-          onClick={addNote}
+          onClick={() => router.push("/notes")}
           style={{
-            padding: "0 14px",
-            borderRadius: 10,
+            padding: "10px 18px",
+            borderRadius: 12,
             background: "#1f3c88",
             color: "white",
             border: "none",
+            fontSize: 14,
           }}
         >
-          ＋
+          📝 Xem / ghi chú cho ngày này
         </button>
-      </div>
-
-      {/* NOTES */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {notes.length === 0 && (
-          <div style={{ opacity: 0.5, textAlign: "center" }}>
-            Không có ghi chú cho ngày này
-          </div>
-        )}
-
-        {notes.map((n) => (
-          <div
-            key={n.id}
-            style={{
-              background: "#fff",
-              padding: 12,
-              borderRadius: 12,
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <div>{n.text}</div>
-              <div style={{ fontSize: 12, opacity: 0.6 }}>
-                {n.time}
-              </div>
-            </div>
-
-            <button
-              onClick={() => deleteNote(n.id)}
-              style={{
-                border: "none",
-                background: "transparent",
-                color: "red",
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        ))}
       </div>
     </div>
   );
