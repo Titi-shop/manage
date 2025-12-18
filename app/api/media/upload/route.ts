@@ -1,12 +1,15 @@
 import { kv } from "@vercel/kv";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import crypto from "crypto";
+import { put } from "@vercel/blob";
 
-async function getUsername() {
-  const token = cookies().get("session")?.value;
+async function getUsername(): Promise<string | null> {
+  // ✅ BẮT BUỘC await (Next.js 16)
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
   if (!token) return null;
+
   return await kv.get<string>(`session:${token}`);
 }
 
@@ -16,41 +19,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({}, { status: 401 });
   }
 
-  const form = await req.formData();
-  const file = form.get("file") as File | null;
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
 
   if (!file) {
-    return NextResponse.json({ error: "No file" }, { status: 400 });
+    return NextResponse.json(
+      { error: "No file provided" },
+      { status: 400 }
+    );
   }
-
-  // 📌 phân loại
-  let type: "image" | "video" | "file" = "file";
-  if (file.type.startsWith("image/")) type = "image";
-  else if (file.type.startsWith("video/")) type = "video";
 
   const id = crypto.randomUUID();
 
-  // ✅ upload Blob
-  const blob = await put(
-    `${username}/${id}-${file.name}`,
-    file,
-    { access: "private" } // 🔒 private
-  );
+  // ✅ Upload lên Vercel Blob
+  const blob = await put(`media/${username}/${id}-${file.name}`, file, {
+    access: "private",
+  });
 
-  const item = {
+  const mediaItem = {
     id,
     name: file.name,
-    type,
+    type: file.type.startsWith("image/")
+      ? "image"
+      : file.type.startsWith("video/")
+      ? "video"
+      : "file",
     mime: file.type,
     size: file.size,
-    url: blob.url,        // 🔑 blob url
+    url: blob.url,
     createdAt: Date.now(),
   };
 
   const key = `media:${username}`;
   const list = (await kv.get<any[]>(key)) ?? [];
-  list.unshift(item);
+  list.unshift(mediaItem);
   await kv.set(key, list);
 
-  return NextResponse.json(item);
+  return NextResponse.json(mediaItem);
 }
