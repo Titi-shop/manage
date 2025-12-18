@@ -29,13 +29,14 @@ export default function ListDetailPage() {
 
   const [list, setList] = useState<List | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
   /* =======================
      LOAD DATA
   ======================= */
   useEffect(() => {
-    fetch(`/api/lists/${id}`)
+    fetch(`/api/lists/${id}`, { credentials: "include" })
       .then((res) => {
         if (res.status === 401) {
           router.push("/login");
@@ -63,18 +64,23 @@ export default function ListDetailPage() {
   }, [id, router]);
 
   /* =======================
-     ADD PERSON
+     ADD / DELETE ROW
   ======================= */
   const addRow = () => {
     setRows([
       ...rows,
-      {
-        name: "",
-        phone: "",
-        total: 0,
-        payments: [{ date: "", amount: 0 }],
-      },
+      { name: "", phone: "", total: 0, payments: [{ date: "", amount: 0 }] },
     ]);
+  };
+
+  const deleteSelectedRows = () => {
+    if (selectedRows.length === 0) return;
+
+    const ok = confirm("Bạn chắc chắn muốn xoá các mục đã chọn?");
+    if (!ok) return;
+
+    setRows(rows.filter((_, i) => !selectedRows.includes(i)));
+    setSelectedRows([]);
   };
 
   /* =======================
@@ -103,18 +109,11 @@ export default function ListDetailPage() {
     const row = copy[rowIndex];
     const payments = [...row.payments];
 
-    const paidBefore = payments
-      .slice(0, payIndex)
-      .filter(p => p.date && p.amount > 0)
-      .reduce((s, p) => s + p.amount, 0);
-
-    const remain = row.total - paidBefore;
-
     if (field === "amount") {
-  let num = Number(value);
-  if (num < 0) num = 0; // chỉ chặn âm
-  payments[payIndex] = { ...payments[payIndex], amount: num };
-} else {
+      let num = Number(value);
+      if (num < 0) num = 0;
+      payments[payIndex] = { ...payments[payIndex], amount: num };
+    } else {
       payments[payIndex] = { ...payments[payIndex], date: value as string };
     }
 
@@ -139,6 +138,7 @@ export default function ListDetailPage() {
     await fetch(`/api/lists/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(cleaned),
     });
 
@@ -184,16 +184,21 @@ export default function ListDetailPage() {
       <table
         border={1}
         cellPadding={6}
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-          marginRight: 8,
-        }}
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
       >
         <thead>
           <tr>
-            <th>STT</th>
+            <th>
+              <input
+                type="checkbox"
+                checked={selectedRows.length === rows.length && rows.length > 0}
+                onChange={(e) =>
+                  setSelectedRows(
+                    e.target.checked ? rows.map((_, i) => i) : []
+                  )
+                }
+              />
+            </th>
             <th>Tên</th>
             <th>SĐT</th>
             <th>Nợ</th>
@@ -209,39 +214,33 @@ export default function ListDetailPage() {
 
             return (
               <tr key={i} style={{ background: done ? "#e8f8ee" : undefined }}>
-                <td>{i + 1}</td>
-
-                {/* ✅ CHỈ SỬA Ô TÊN */}
                 <td>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <input
-                      placeholder="Tên"
-                      style={{ width: 120 }}
-                      value={r.name.split("\n")[0] || ""}
-                      onChange={(e) => {
-                        const c = [...rows];
-                        const note = r.name.split("\n")[1] || "";
-                        c[i].name = e.target.value + (note ? "\n" + note : "");
-                        setRows(c);
-                      }}
-                    />
-                    <input
-                      placeholder="Ghi chú (tuỳ chọn)"
-                      style={{ width: 120, fontSize: 12 }}
-                      value={r.name.split("\n")[1] || ""}
-                      onChange={(e) => {
-                        const c = [...rows];
-                        const main = r.name.split("\n")[0] || "";
-                        c[i].name = main + (e.target.value ? "\n" + e.target.value : "");
-                        setRows(c);
-                      }}
-                    />
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.includes(i)}
+                    onChange={(e) =>
+                      setSelectedRows(
+                        e.target.checked
+                          ? [...selectedRows, i]
+                          : selectedRows.filter((x) => x !== i)
+                      )
+                    }
+                  />
                 </td>
 
                 <td>
                   <input
-                    style={{ width: 90 }}
+                    value={r.name}
+                    onChange={(e) => {
+                      const c = [...rows];
+                      c[i].name = e.target.value;
+                      setRows(c);
+                    }}
+                  />
+                </td>
+
+                <td>
+                  <input
                     value={r.phone ?? ""}
                     onChange={(e) => {
                       const c = [...rows];
@@ -254,7 +253,6 @@ export default function ListDetailPage() {
                 <td>
                   <input
                     type="number"
-                    style={{ width: 70 }}
                     value={r.total}
                     onChange={(e) => {
                       const c = [...rows];
@@ -265,47 +263,51 @@ export default function ListDetailPage() {
                 </td>
 
                 <td>
-                  <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
-                    {r.payments.map((p, pi) => (
-                      <div key={pi} style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 60 }}>
-                        <DateInput
-  value={p.date}
-  onChange={(val) =>
-    updatePayment(i, pi, "date", val)
-  }
-/>
-
-                        <input
-                          type="number"
-                          placeholder="Tiền"
-                          value={p.amount || ""}
-                          style={{ width: 60, textAlign: "center" }}
-                          onChange={(e) =>
-                            updatePayment(i, pi, "amount", Number(e.target.value))
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  {r.payments.map((p, pi) => (
+                    <div key={pi} style={{ display: "flex", gap: 4 }}>
+                      <DateInput
+                        value={p.date}
+                        onChange={(val) =>
+                          updatePayment(i, pi, "date", val)
+                        }
+                      />
+                      <input
+                        type="number"
+                        value={p.amount || ""}
+                        onChange={(e) =>
+                          updatePayment(i, pi, "amount", e.target.value)
+                        }
+                      />
+                    </div>
+                  ))}
                 </td>
 
-                <td style={{ fontWeight: "bold", color: done ? "green" : "black" }}>
-                  {done ? "✓" : remain}
-                </td>
+                <td>{done ? "✓" : remain}</td>
               </tr>
             );
           })}
 
           <tr style={{ fontWeight: "bold", background: "#f5f5f5" }}>
-            <td colSpan={4} align="right">Tổng</td>
-            <td>Thu: {totalPaid}</td>
-            <td>Nợ: {totalRemain}</td>
+            <td colSpan={3}>Tổng</td>
+            <td>{totalPaid}</td>
+            <td></td>
+            <td>{totalRemain}</td>
           </tr>
         </tbody>
       </table>
 
-      <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+      <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
         <button onClick={addRow}>➕ Thêm</button>
+
+        {selectedRows.length > 0 && (
+          <button
+            onClick={deleteSelectedRows}
+            style={{ background: "red", color: "white" }}
+          >
+            🗑️ Xoá ({selectedRows.length})
+          </button>
+        )}
+
         <button onClick={copyAll}>📋 Copy</button>
         <button onClick={save}>💾 Lưu</button>
       </div>
