@@ -1,100 +1,108 @@
 import { kv } from "@vercel/kv";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { List } from "@/app/types";
+import { requireUsername } from "@/app/api/_utils/session";
 
-/**
- * Lấy username từ session cookie
- */
-async function getUsername(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("session")?.value;
-  if (!token) return null;
-  return await kv.get<string>(`session:${token}`);
-}
-
-// =======================
-// GET /api/lists/[id]
-// Lấy 1 list theo id
-// =======================
+/* =======================
+   GET /api/lists/[id]
+   Lấy 1 sổ
+======================= */
 export async function GET(
-  _request: NextRequest,
+  _req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  try {
+    const { id } = await context.params;
+    const username = await requireUsername();
 
-  const username = await getUsername();
-  if (!username) {
-    return NextResponse.json({}, { status: 401 });
+    const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
+    const list = lists.find((l) => l.id === id);
+
+    if (!list) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(list);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
-  const list = lists.find((l) => l.id === id);
-
-  if (!list) {
-    return NextResponse.json({}, { status: 404 });
-  }
-
-  return NextResponse.json(list);
 }
 
-// =======================
-// PUT /api/lists/[id]
-// Cập nhật nội dung list
-// =======================
-export async function PUT(
-  request: NextRequest,
+/* =======================
+   POST /api/lists/[id]
+   Lưu sổ
+======================= */
+export async function POST(
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  try {
+    const { id } = await context.params;
+    const username = await requireUsername();
 
-  const username = await getUsername();
-  if (!username) {
-    return NextResponse.json({}, { status: 401 });
+    const rows = await req.json();
+    if (!Array.isArray(rows)) {
+      return NextResponse.json(
+        { error: "Dữ liệu không hợp lệ" },
+        { status: 400 }
+      );
+    }
+
+    const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
+    const index = lists.findIndex((l) => l.id === id);
+
+    if (index === -1) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    lists[index] = {
+      ...lists[index],
+      items: rows,
+    };
+
+    await kv.set(`lists:${username}`, lists);
+
+    return NextResponse.json(lists[index]);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const rows = await request.json(); // nội dung bảng
-
-  const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
-  const index = lists.findIndex((l) => l.id === id);
-
-  if (index === -1) {
-    return NextResponse.json({}, { status: 404 });
-  }
-
-  lists[index] = {
-    ...lists[index],
-    items: rows,
-  };
-
-  await kv.set(`lists:${username}`, lists);
-
-  return NextResponse.json(lists[index]);
 }
 
-// =======================
-// DELETE /api/lists/[id]
-// Xoá list
-// =======================
+/* =======================
+   DELETE /api/lists/[id]
+   Xoá sổ (bắt buộc mật khẩu)
+======================= */
 export async function DELETE(
-  _request: NextRequest,
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+  try {
+    const { id } = await context.params;
+    const username = await requireUsername();
 
-  const username = await getUsername();
-  if (!username) {
-    return NextResponse.json({}, { status: 401 });
+    const body = await req.json().catch(() => ({}));
+    const { password } = body;
+
+    // 🔐 MẬT KHẨU XÁC NHẬN XOÁ
+    if (password !== "1234") {
+      return NextResponse.json(
+        { error: "Sai mật khẩu" },
+        { status: 403 }
+      );
+    }
+
+    const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
+    const exists = lists.some((l) => l.id === id);
+
+    if (!exists) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const filtered = lists.filter((l) => l.id !== id);
+    await kv.set(`lists:${username}`, filtered);
+
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const lists = (await kv.get<List[]>(`lists:${username}`)) ?? [];
-  const newLists = lists.filter((l) => l.id !== id);
-
-  if (newLists.length === lists.length) {
-    return NextResponse.json({}, { status: 404 });
-  }
-
-  await kv.set(`lists:${username}`, newLists);
-
-  return NextResponse.json({ success: true });
 }
