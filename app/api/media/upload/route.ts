@@ -5,7 +5,6 @@ import crypto from "crypto";
 import { put } from "@vercel/blob";
 
 async function getUsername(): Promise<string | null> {
-  // ✅ BẮT BUỘC await (Next.js 16)
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
   if (!token) return null;
@@ -31,10 +30,12 @@ export async function POST(req: NextRequest) {
 
   const id = crypto.randomUUID();
 
-  // ✅ Upload lên Vercel Blob
-  const blob = await put(`media/${username}/${id}-${file.name}`, file, {
-    access: "private",
-  });
+  // ✅ Vercel Blob CHỈ public
+  const blob = await put(
+    `media/${username}/${id}-${file.name}`,
+    file,
+    { access: "public" }
+  );
 
   const mediaItem = {
     id,
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
       : "file",
     mime: file.type,
     size: file.size,
-    url: blob.url,
+    url: blob.url, // ⚠️ KHÔNG expose trực tiếp ra UI
     createdAt: Date.now(),
   };
 
