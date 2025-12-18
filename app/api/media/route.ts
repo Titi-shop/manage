@@ -1,11 +1,9 @@
 import { kv } from "@vercel/kv";
 import { cookies } from "next/headers";
-import { kv } from "@vercel/kv";
+import { NextResponse } from "next/server";
 
 async function getUsername(): Promise<string | null> {
-  // ✅ BẮT BUỘC await
   const cookieStore = await cookies();
-
   const token = cookieStore.get("session")?.value;
   if (!token) return null;
 
