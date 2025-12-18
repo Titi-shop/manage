@@ -2,11 +2,14 @@ import { cookies } from "next/headers";
 import { kv } from "@vercel/kv";
 
 /**
- * Lấy username từ session cookie
- * ❌ throw error nếu chưa đăng nhập
+ * Bắt buộc phải đăng nhập
+ * → trả về username
+ * → throw nếu chưa đăng nhập
  */
 export async function requireUsername(): Promise<string> {
-  const cookieStore = cookies();
+  // ✅ BẮT BUỘC await (Next.js 15+)
+  const cookieStore = await cookies();
+
   const token = cookieStore.get("session")?.value;
 
   if (!token) {
