@@ -263,24 +263,40 @@ export default function ListDetailPage() {
                 </td>
 
                 <td>
-                  {r.payments.map((p, pi) => (
-                    <div key={pi} style={{ display: "flex", gap: 4 }}>
-                      <DateInput
-                        value={p.date}
-                        onChange={(val) =>
-                          updatePayment(i, pi, "date", val)
-                        }
-                      />
-                      <input
-                        type="number"
-                        value={p.amount || ""}
-                        onChange={(e) =>
-                          updatePayment(i, pi, "amount", e.target.value)
-                        }
-                      />
-                    </div>
-                  ))}
-                </td>
+  <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+    {r.payments.map((p, pi) => (
+      <div
+        key={pi}
+        style={{
+          display: "flex",
+          gap: 4,
+          alignItems: "center",
+          border: "1px solid #ddd",
+          padding: "2px 4px",
+          borderRadius: 6,
+          minWidth: 130,
+        }}
+      >
+        <DateInput
+          value={p.date}
+          onChange={(val) =>
+            updatePayment(i, pi, "date", val)
+          }
+        />
+
+        <input
+          type="number"
+          placeholder="Tiền"
+          value={p.amount || ""}
+          style={{ width: 70, textAlign: "center" }}
+          onChange={(e) =>
+            updatePayment(i, pi, "amount", Number(e.target.value))
+          }
+        />
+      </div>
+    ))}
+  </div>
+</td>
 
                 <td>{done ? "✓" : remain}</td>
               </tr>
