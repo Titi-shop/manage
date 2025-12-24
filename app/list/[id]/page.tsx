@@ -192,15 +192,26 @@ export default function ListDetailPage() {
         }}
       >
         <thead>
-          <tr>
-            <th>STT</th>
-            <th>Tên</th>
-            <th>SĐT</th>
-            <th>Nợ</th>
-            <th>Ngày trả</th>
-            <th>Còn</th>
-          </tr>
-        </thead>
+  <tr>
+    <th>
+      <input
+        type="checkbox"
+        checked={selectedRows.length === rows.length && rows.length > 0}
+        onChange={(e) =>
+          setSelectedRows(
+            e.target.checked ? rows.map((_, i) => i) : []
+          )
+        }
+      />
+    </th>
+    <th>STT</th>
+    <th>Tên</th>
+    <th>SĐT</th>
+    <th>Nợ</th>
+    <th>Ngày trả</th>
+    <th>Còn</th>
+  </tr>
+</thead>
 
         <tbody>
           {rows.map((r, i) => {
