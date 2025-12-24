@@ -13,16 +13,13 @@ export default function ListsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /* =======================
-     LOAD LISTS
-  ======================= */
   useEffect(() => {
     const load = async () => {
       try {
         const res = await fetch("/api/lists", {
-  credentials: "include",
-  cache: "no-store",
-});
+          credentials: "include",
+          cache: "no-store",
+        });
         const data: List[] = await res.json();
         setLists(data);
       } finally {
@@ -33,9 +30,6 @@ export default function ListsPage() {
     load();
   }, []);
 
-  /* =======================
-     CREATE LIST
-  ======================= */
   const createList = async () => {
     setError("");
     if (!name.trim()) {
@@ -54,61 +48,93 @@ export default function ListsPage() {
     setName("");
   };
 
-  /* =======================
-     DELETE LISTS
-  ======================= */
   const deleteLists = async () => {
-  if (selected.length === 0) return;
-  const password = prompt("Nhập mật khẩu xoá:");
-if (!password) return;
+    if (selected.length === 0) return;
 
-  for (const id of selected) {
-    await fetch(`/api/lists/${id}`, {
-  method: "DELETE",
-  credentials: "include",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ password: "1234" }),
-});
-  }
+    const password = prompt("Nhập mật khẩu xoá:");
+    if (!password) return;
 
-  setLists(lists.filter((l) => !selected.includes(l.id)));
-  setSelected([]);
-};
-  /* =======================
-     UI (LẤY TỪ FILE 1)
-  ======================= */
+    for (const id of selected) {
+      await fetch(`/api/lists/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+    }
+
+    setLists(lists.filter((l) => !selected.includes(l.id)));
+    setSelected([]);
+  };
+
   return (
-    <div style={{ padding: 16, maxWidth: 420, margin: "0 auto", paddingBottom: 70 }}>
+    <div
+      style={{
+        padding: 16,
+        maxWidth: 520,
+        margin: "0 auto",
+        paddingBottom: 80,
+      }}
+    >
       {/* ===== TITLE ===== */}
-      <h2 style={{ marginBottom: 8 }}>📒 Danh sách sổ</h2>
+      <h2 style={{ marginBottom: 12, fontSize: 22 }}>📒 Danh sách sổ</h2>
 
       {/* ===== CREATE ===== */}
-      <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ display: "flex", gap: 8 }}>
         <input
-          placeholder="Tên sổ (tên danh sách...)"
+          placeholder="Tên sổ..."
           value={name}
           onChange={(e) => setName(e.target.value)}
-          style={{ flex: 1 }}
+          style={{
+            flex: 1,
+            padding: 10,
+            fontSize: 16,
+            borderRadius: 8,
+            border: "1px solid #ccc",
+          }}
         />
-        <button onClick={createList}>➕</button>
+        <button
+          onClick={createList}
+          style={{
+            fontSize: 20,
+            padding: "8px 14px",
+            borderRadius: 8,
+          }}
+        >
+          ➕
+        </button>
       </div>
 
-      {error && <p style={{ color: "red", fontSize: 13 }}>{error}</p>}
+      {error && (
+        <p style={{ color: "red", fontSize: 14, marginTop: 6 }}>{error}</p>
+      )}
 
       {/* ===== LISTS ===== */}
-      <ul style={{ marginTop: 16, paddingLeft: 0, listStyle: "none" }}>
+      <ul
+        style={{
+          marginTop: 18,
+          paddingLeft: 0,
+          listStyle: "none",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
         {lists.map((l) => (
           <li
             key={l.id}
             style={{
               display: "flex",
               alignItems: "center",
-              padding: "6px 0",
-              borderBottom: "1px dashed #eee",
+              padding: 12,
+              borderRadius: 10,
+              border: "1px solid #e5e5e5",
+              background: "#fafafa",
             }}
           >
             <input
               type="checkbox"
+              style={{ width: 22, height: 22 }}
               checked={selected.includes(l.id)}
               onChange={(e) =>
                 setSelected(
@@ -118,14 +144,16 @@ if (!password) return;
                 )
               }
             />
+
             <button
               onClick={() => router.push(`/list/${l.id}`)}
               style={{
-                marginLeft: 8,
+                marginLeft: 12,
                 border: "none",
                 background: "none",
                 cursor: "pointer",
                 textAlign: "left",
+                fontSize: 18,
               }}
             >
               📁 {l.name}
@@ -139,14 +167,16 @@ if (!password) return;
         <button
           onClick={deleteLists}
           style={{
-            marginTop: 12,
+            marginTop: 16,
             width: "100%",
             color: "white",
             background: "red",
-            padding: 8,
+            padding: 12,
+            borderRadius: 10,
+            fontSize: 16,
           }}
         >
-          🗑️ Xoá sổ đã chọn
+          🗑️ Xoá {selected.length} sổ đã chọn
         </button>
       )}
     </div>
