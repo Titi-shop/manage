@@ -191,7 +191,12 @@ const copySelected = () => {
      UI
   ======================= */
   return (
-    <div style={{ padding: 12 }}>
+    <div
+  style={{
+    padding: 12,
+    paddingBottom: "calc(90px + env(safe-area-inset-bottom))",
+  }}
+>
       <h2>📒 {list?.name}</h2>
 
       <table
