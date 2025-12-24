@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { List } from "@/app/types";
 import DateInput from "@/app/components/DateInput";
-const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
 /* =======================
    TYPES
@@ -31,7 +30,7 @@ export default function ListDetailPage() {
   const [list, setList] = useState<List | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
   /* =======================
      LOAD DATA
   ======================= */
