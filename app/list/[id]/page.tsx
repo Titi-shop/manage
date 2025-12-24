@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { List } from "@/app/types";
 import DateInput from "@/app/components/DateInput";
+const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
 /* =======================
    TYPES
@@ -76,6 +77,18 @@ export default function ListDetailPage() {
       },
     ]);
   };
+   /* =======================
+   DELETE SELECTED ROWS
+======================= */
+const deleteSelectedRows = () => {
+  if (selectedRows.length === 0) return;
+
+  const ok = confirm("Bạn chắc chắn muốn xoá các dòng đã chọn?");
+  if (!ok) return;
+
+  setRows(rows.filter((_, i) => !selectedRows.includes(i)));
+  setSelectedRows([]);
+};
 
   /* =======================
      CALCULATE
@@ -220,7 +233,20 @@ export default function ListDetailPage() {
 
             return (
               <tr key={i} style={{ background: done ? "#e8f8ee" : undefined }}>
-                <td>{i + 1}</td>
+  <td>
+    <input
+      type="checkbox"
+      checked={selectedRows.includes(i)}
+      onChange={(e) =>
+        setSelectedRows(
+          e.target.checked
+            ? [...selectedRows, i]
+            : selectedRows.filter((x) => x !== i)
+        )
+      }
+    />
+  </td>
+  <td>{i + 1}</td>
 
                 {/* ✅ CHỈ SỬA Ô TÊN */}
                 <td>
@@ -308,18 +334,28 @@ export default function ListDetailPage() {
           })}
 
           <tr style={{ fontWeight: "bold", background: "#f5f5f5" }}>
-            <td colSpan={4} align="right">Tổng</td>
+            <td colSpan={5} align="right">Tổng</td>
             <td>Thu: {totalPaid}</td>
             <td>Nợ: {totalRemain}</td>
           </tr>
         </tbody>
       </table>
 
-      <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
-        <button onClick={addRow}>➕ Thêm</button>
-        <button onClick={copyAll}>📋 Copy</button>
-        <button onClick={save}>💾 Lưu</button>
-      </div>
+    <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+  <button onClick={addRow}>➕ Thêm</button>
+
+  {selectedRows.length > 0 && (
+    <button
+      onClick={deleteSelectedRows}
+      style={{ background: "red", color: "white" }}
+    >
+      🗑️ Xoá ({selectedRows.length})
+    </button>
+  )}
+
+  <button onClick={copyAll}>📋 Copy</button>
+  <button onClick={save}>💾 Lưu</button>
+</div>
     </div>
   );
 }
