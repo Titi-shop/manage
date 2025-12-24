@@ -192,7 +192,7 @@ const copySelected = () => {
   ======================= */
   return (
     <div style={{ padding: 12 }}>
-      <h2>📒 {list.name}</h2>
+      <h2>📒 {list?.name}</h2>
 
       <table
         border={1}
