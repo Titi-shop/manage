@@ -65,9 +65,11 @@ export default function ListsPage() {
 
   for (const id of selected) {
     await fetch(`/api/lists/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+  method: "DELETE",
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ password: "1234" }),
+});
   }
 
   setLists(lists.filter((l) => !selected.includes(l.id)));
