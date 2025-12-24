@@ -156,36 +156,7 @@ const deleteSelectedRows = () => {
 
     alert("✅ Đã lưu");
   };
-
-  /* =======================
-     COPY
-  ======================= */
-  const copyAll = () => {
-    let text = `📒 ${list?.name}\n\n`;
-
-    rows.forEach((r, i) => {
-      text += `${i + 1}. ${r.name} (${r.phone || "-"})\n`;
-      text += `Nợ: ${r.total}\n`;
-
-      r.payments
-        .filter((p) => p.date && p.amount > 0)
-        .forEach((p) => {
-          text += `  - ${p.date}: ${p.amount}\n`;
-        });
-
-      text += `Còn lại: ${remaining(r)}\n\n`;
-    });
-
-    text += `💰 Tổng thu: ${totalPaid}\n`;
-    text += `📉 Tổng còn nợ: ${totalRemain}`;
-
-    navigator.clipboard.writeText(text);
-    alert("📋 Đã copy toàn bộ sổ");
-  };
-
-  if (loading) return <p style={{ padding: 24 }}>Đang tải…</p>;
-  if (!list) return <p>❌ Không tồn tại</p>;
-
+   
    /* =======================
    COPY SELECTED ROWS
 ======================= */
@@ -382,10 +353,8 @@ const copySelected = () => {
     </button>
   )}
 
-       <button onClick={copyAll}>📋 Copy tất cả</button>
-
 {selectedRows.length > 0 && (
-  <button onClick={copySelected}>📋 Copy đã chọn</button>
+  <button onClick={copySelected}>📋 Copy </button>
 )}
   <button onClick={save}>💾 Lưu</button>
 </div>
