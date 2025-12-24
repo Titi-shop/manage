@@ -62,6 +62,8 @@ export default function ListsPage() {
 
   const ok = confirm("Bạn chắc chắn muốn xoá các sổ đã chọn?");
   if (!ok) return;
+  const password = prompt("Nhập mật khẩu xoá:");
+if (!password) return;
 
   for (const id of selected) {
     await fetch(`/api/lists/${id}`, {
