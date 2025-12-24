@@ -59,9 +59,6 @@ export default function ListsPage() {
   ======================= */
   const deleteLists = async () => {
   if (selected.length === 0) return;
-
-  const ok = confirm("Bạn chắc chắn muốn xoá các sổ đã chọn?");
-  if (!ok) return;
   const password = prompt("Nhập mật khẩu xoá:");
 if (!password) return;
 
