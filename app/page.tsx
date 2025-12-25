@@ -3,197 +3,159 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const chi = ["Tý","Sửu","Dần","Mão","Thìn","Tỵ","Ngọ","Mùi","Thân","Dậu","Tuất","Hợi"];
-const can = ["Giáp","Ất","Bính","Đinh","Mậu","Kỷ","Canh","Tân","Nhâm","Quý"];
-
-function getCanChiYear(y:number){
-  return `${can[(y+6)%10]} ${chi[(y+8)%12]}`;
-}
-
-const goldenHours = [
-  "Tý 23-01","Sửu 01-03","Mão 05-07",
-  "Ngọ 11-13","Mùi 13-15","Dậu 17-19"
-];
-
-const dayColor = (d:number)=>[
-  "#ffd2b8",
-  "#ffc4a3",
-  "#ffb38f",
-  "#ffa07c",
-  "#ff906c",
-  "#ff835e",
-  "#ff7653",
-][d % 7];
-
 export default function HomeCalendarPage() {
-
   const router = useRouter();
 
-  const [now,setNow] = useState(new Date());
-  const [viewDate,setViewDate] = useState<Date>(new Date());
+  /* =======================
+     REAL TIME CLOCK
+  ======================= */
+  const [now, setNow] = useState(new Date());
 
-  useEffect(()=>{
-    const t=setInterval(()=>setNow(new Date()),60000);
-    return ()=>clearInterval(t);
-  },[]);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-  /* ===== NGÀY ===== */
-  const wk = ["CN","TH2","TH3","TH4","TH5","TH6","TH7"];
+  /* =======================
+     VIEW DATE
+  ======================= */
+  const [viewDate, setViewDate] = useState<Date>(new Date());
+  const dateKey = viewDate.toISOString().slice(0, 10);
 
-  const d = viewDate.getDate();
-  const m = viewDate.getMonth()+1;
-  const y = viewDate.getFullYear();
-  const weekday = wk[viewDate.getDay()];
+  /* =======================
+     DATE FORMAT
+  ======================= */
+  const weekdays = [
+    "CHỦ NHẬT",
+    "THỨ HAI",
+    "THỨ BA",
+    "THỨ TƯ",
+    "THỨ NĂM",
+    "THỨ SÁU",
+    "THỨ BẢY",
+  ];
 
-  const timeNow = now.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+  const day = viewDate.getDate();
+  const month = viewDate.getMonth() + 1;
+  const year = viewDate.getFullYear();
+  const weekday = weekdays[viewDate.getDay()];
 
-  /* ===== ÂM LỊCH ===== */
-  const lunar = new Intl.DateTimeFormat(
-    "vi-VN-u-ca-chinese",
-    {day:"numeric",month:"numeric"}
-  ).format(viewDate).split("/");
+  const timeNow = now.toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  const lunarDay = lunar?.[0] ?? "";
-  const lunarMonth = lunar?.[1] ?? "";
-
-  const canchiYear = getCanChiYear(y);
-
-  /* ===== ĐỔI NGÀY BẰNG MŨI TÊN ===== */
-  const changeDay = (n:number)=>{
+  /* =======================
+     CHANGE DAY
+  ======================= */
+  const changeDay = (delta: number) => {
     const d = new Date(viewDate);
-    d.setDate(d.getDate()+n);
+    d.setDate(d.getDate() + delta);
     setViewDate(d);
   };
 
+  const onPickDate = (value: string) => {
+    setViewDate(new Date(value));
+  };
+
+  /* =======================
+     UI
+  ======================= */
   return (
     <div
       style={{
-        height:"100vh",
-        overflow:"hidden",          // ⛔ KHÔNG CHO CUỘN
-        background: dayColor(viewDate.getDay()),
-        display:"flex",
-        justifyContent:"center",
-        alignItems:"center",
-        paddingTop:6,
-        paddingBottom:6,
+        minHeight: "100vh",
+        padding: 16,
+        background:
+          "linear-gradient(180deg, #f6f8fc 0%, #eef2e6 100%)",
+        position: "relative",
       }}
     >
+      {/* 🔐 LOGIN HOTSPOT (ẨN) */}
+      <div
+        onClick={() => router.push("/login")}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 40,
+          height: 40,
+          cursor: "pointer",
+          background: "transparent",
+          zIndex: 9999,
+        }}
+      />
 
+      {/* ===== HEADER DATE ===== */}
+      <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <div
+          style={{
+            display: "inline-block",
+            padding: "6px 16px",
+            borderRadius: 20,
+            background: "#fff",
+            fontSize: 14,
+            marginBottom: 8,
+          }}
+        >
+          Tháng {month} – {year}
+        </div>
+
+        <div
+          style={{
+            fontSize: 96,
+            fontWeight: "bold",
+            color: "#1f3c88",
+            lineHeight: 1,
+          }}
+        >
+          {day}
+        </div>
+
+        <div style={{ fontSize: 20 }}>{weekday}</div>
+
+        <div style={{ fontSize: 13, opacity: 0.7 }}>
+          ⏰ Giờ hiện tại: {timeNow}
+        </div>
+      </div>
+
+      {/* ===== DATE NAV ===== */}
       <div
         style={{
-          width:"100%",
-          maxWidth:560,
-          height:"96vh",           // Giới hạn trong safe-area
-          borderRadius:22,
-          background:"#ffffffee",
-          boxShadow:"0 14px 34px rgba(0,0,0,.22)",
-          padding:14,
-          display:"flex",
-          flexDirection:"column",
-          justifyContent:"space-between"
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+          marginBottom: 20,
         }}
       >
+        <button onClick={() => changeDay(-1)}>⬅️</button>
 
-        {/* HOTSPOT LOGIN */}
-        <div
-          onClick={()=>router.push("/login")}
-          style={{position:"fixed",top:0,left:0,width:40,height:40}}
+        <input
+          type="date"
+          value={dateKey}
+          onChange={(e) => onPickDate(e.target.value)}
         />
 
-        {/* ==========================
-              PHẦN ĐẦU – NGÀY LỚN
-        =========================== */}
-        <div style={{textAlign:"center"}}>
-          
-          <div style={{
-            fontSize:16,
-            padding:"6px 14px",
-            borderRadius:14,
-            background:"#fff2e0",
-            display:"inline-block",
-            marginBottom:6
-          }}>
-            {weekday} — {d}/{m}/{y}
-          </div>
+        <button onClick={() => changeDay(1)}>➡️</button>
+      </div>
 
-          <div style={{
-            fontSize:110,
-            fontWeight:900,
-            color:"#9b1111",
-            lineHeight:1
-          }}>
-            {d}
-          </div>
-
-          <div style={{fontSize:20,marginTop:4}}>
-            🌙 Âm lịch: <b>{lunarDay}/{lunarMonth}</b>
-          </div>
-
-          <div style={{fontSize:18,marginTop:6}}>
-            🔮 <b>{canchiYear}</b>
-          </div>
-
-          <div style={{fontSize:14,opacity:.7,marginTop:6}}>
-            ⏰ {timeNow}
-          </div>
-        </div>
-
-
-        {/* ==========================
-              NÚT ĐỔI NGÀY (KÉO NGANG)
-        =========================== */}
-        <div style={{display:"flex",justifyContent:"center",gap:16}}>
-          <button
-            onClick={()=>changeDay(-1)}
-            style={{fontSize:22}}
-          >
-            ⬅️
-          </button>
-
-          <button
-            onClick={()=>changeDay(1)}
-            style={{fontSize:22}}
-          >
-            ➡️
-          </button>
-        </div>
-
-
-        {/* ==========================
-              GIỜ HOÀNG ĐẠO
-        =========================== */}
-        <div
+      {/* ===== GO TO NOTES ===== */}
+      <div style={{ textAlign: "center" }}>
+        <button
+          onClick={() => router.push("/notes")}
           style={{
-            padding:12,
-            borderRadius:14,
-            background:"#ffe6d6",
-            textAlign:"center",
-            fontSize:16
+            padding: "10px 18px",
+            borderRadius: 12,
+            background: "#1f3c88",
+            color: "white",
+            border: "none",
+            fontSize: 14,
           }}
         >
-          ⛩ <b>Giờ hoàng đạo</b><br/>
-          {goldenHours.join(" • ")}
-        </div>
-
-
-        {/* ==========================
-              TIMELINE GHI CHÚ GỌN
-        =========================== */}
-        <div
-          style={{
-            padding:10,
-            borderRadius:14,
-            background:"#fff7ec",
-            fontSize:15,
-            textAlign:"center"
-          }}
-        >
-          🕒 <b>Timeline trong ngày</b><br/>
-          <span style={{opacity:.6}}>
-            (Phần này vẫn có thể mở rộng về sau)
-          </span>
-        </div>
-
+          📝 Xem / ghi chú cho ngày này
+        </button>
       </div>
     </div>
   );
